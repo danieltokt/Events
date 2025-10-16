@@ -4,7 +4,7 @@
 
 // Register user
 async function register(email, username, password, confirmPassword) {
-    const response = await fetch("http://localhost:8000/api/auth/register/", {
+    const response = await fetch(`${window.API_URL}/api/auth/register/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, username, password, password_confirm: confirmPassword })
