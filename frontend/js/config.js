@@ -1,7 +1,7 @@
 // API Configuration
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:8000/api'
-  : 'https://your-backend.onrender.com/api' // Замените после деплоя backend
+  : 'https://events-db-h9ge.onrender.com/api' // Замените после деплоя backend
 
 // Экспортируем для использования в других файлах
 if (typeof module !== 'undefined' && module.exports) {
