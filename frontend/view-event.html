@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр события - Event Management</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📅</text></svg>">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1>Event Management</h1>
+                <div class="header-actions">
+                    <span class="user-greeting" id="userGreeting"></span>
+                    <button class="btn btn-secondary btn-sm" onclick="logout()">Выйти</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="view-container">
+                <div class="view-header">
+                    <button class="btn btn-secondary" onclick="window.location.href='events.html'">
+                        ← Назад к списку
+                    </button>
+                    <!-- ✅ Контейнер для кнопок действий (будет скрыт если не владелец) -->
+                    <div class="view-actions" id="actionButtons" style="display: none;">
+                        <button class="btn btn-secondary" id="editBtn">
+                            Редактировать
+                        </button>
+                        <button class="btn btn-danger" id="deleteBtn">
+                            Удалить
+                        </button>
+                    </div>
+                </div>
+
+                <div id="loadingState" class="loading">Загрузка события...</div>
+
+                <div id="eventDetails" class="event-details" style="display: none;">
+                    <h1 id="eventTitle"></h1>
+                    <div class="event-meta-large">
+                        <div class="event-meta-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            <div>
+                                <strong>Дата начала:</strong>
+                                <span id="eventStartDate"></span>
+                            </div>
+                        </div>
+                        <div class="event-meta-item" id="endDateContainer" style="display: none;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            <div>
+                                <strong>Дата окончания:</strong>
+                                <span id="eventEndDate"></span>
+                            </div>
+                        </div>
+                        <div class="event-meta-item" id="locationContainer" style="display: none;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                            <div>
+                                <strong>Место:</strong>
+                                <span id="eventLocation"></span>
+                            </div>
+                        </div>
+                        <div class="event-meta-item" id="categoryContainer" style="display: none;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                            </svg>
+                            <div>
+                                <strong>Категория:</strong>
+                                <span id="eventCategory"></span>
+                            </div>
+                        </div>
+                        <!-- ✅ ДОБАВЛЕНО: Показываем создателя события -->
+                        <div class="event-meta-item">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            <div>
+                                <strong>Автор:</strong>
+                                <span id="eventCreator"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="event-description-section">
+                        <h3>Описание</h3>
+                        <p id="eventDescription"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="notification" class="notification"></div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h3>Подтверждение удаления</h3>
+            <p>Вы уверены, что хотите удалить это событие?</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeDeleteModal()">Отмена</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">Удалить</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/events.js"></script>
+    <script>
+        // Check authentication
+        checkAuth();
+        
+        // Load user info
+        const user = getCurrentUser();
+        if (user) {
+            document.getElementById('userGreeting').textContent = `Привет, ${user.username}!`;
+        }
+        
+        // Get event ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const eventId = urlParams.get('id');
+        
+        if (!eventId) {
+            showNotification('ID события не найден', 'error');
+            setTimeout(() => window.location.href = 'events.html', 2000);
+        } else {
+            loadEventData();
+        }
+        
+        async function loadEventData() {
+            try {
+                const event = await getEvent(eventId);
+                const currentUser = getCurrentUser();
+                
+                // ✅ ГЛАВНОЕ: Проверяем, является ли текущий пользователь создателем
+                const isOwner = currentUser && event.created_by_id === currentUser.id;
+                
+                // Populate details
+                document.getElementById('eventTitle').textContent = event.title;
+                document.getElementById('eventStartDate').textContent = formatDate(event.start_date);
+                document.getElementById('eventCreator').textContent = event.created_by_name;
+                
+                if (event.end_date) {
+                    document.getElementById('endDateContainer').style.display = 'flex';
+                    document.getElementById('eventEndDate').textContent = formatDate(event.end_date);
+                }
+                
+                if (event.location) {
+                    document.getElementById('locationContainer').style.display = 'flex';
+                    document.getElementById('eventLocation').textContent = event.location;
+                }
+                
+                if (event.category) {
+                    document.getElementById('categoryContainer').style.display = 'flex';
+                    document.getElementById('eventCategory').textContent = getCategoryLabel(event.category);
+                }
+                
+                document.getElementById('eventDescription').textContent = 
+                    event.description || 'Описание отсутствует';
+                
+                // Show details
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('eventDetails').style.display = 'block';
+                
+                // ✅ Показать кнопки действий только если владелец события
+                if (isOwner) {
+                    document.getElementById('actionButtons').style.display = 'flex';
+                    
+                    document.getElementById('editBtn').onclick = () => {
+                        window.location.href = `edit-event.html?id=${eventId}`;
+                    };
+                    
+                    document.getElementById('deleteBtn').onclick = () => {
+                        document.getElementById('deleteModal').style.display = 'flex';
+                    };
+                }
+                
+            } catch (error) {
+                showNotification('Ошибка загрузки события', 'error');
+                setTimeout(() => window.location.href = 'events.html', 2000);
+            }
+        }
+        
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+        
+        async function confirmDelete() {
+            try {
+                await deleteEvent(eventId);
+                showNotification('Событие успешно удалено', 'success');
+                setTimeout(() => window.location.href = 'events.html', 1500);
+            } catch (error) {
+                // ✅ Проверка на ошибку 403
+                if (error.response?.status === 403) {
+                    showNotification('Вы не можете удалить это событие', 'error');
+                } else {
+                    showNotification('Ошибка при удалении события', 'error');
+                }
+                closeDeleteModal();
+            }
+        }
+        
+        function getCategoryLabel(category) {
+            const labels = {
+                'conference': 'Конференция',
+                'workshop': 'Праздничное событие',
+                'meetup': 'Собрание',
+                'webinar': 'Вебинар',
+                'other': 'Другое'
+            };
+            return labels[category] || category;
+        }
+    </script>
+</body>
+</html>

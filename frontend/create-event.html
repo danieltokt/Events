@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создать событие - Event Management</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📅</text></svg>">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1>Event Management</h1>
+                <div class="header-actions">
+                    <span class="user-greeting" id="userGreeting"></span>
+                    <button class="btn btn-secondary btn-sm" onclick="logout()">Выйти</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="form-container">
+                <div class="form-header">
+                    <h2>Создать событие</h2>
+                    <button class="btn btn-secondary" onclick="window.location.href='events.html'">
+                        ← Назад
+                    </button>
+                </div>
+
+                <form id="createEventForm" class="event-form">
+                    <div class="form-group">
+                        <label for="title">Название события *</label>
+                        <input 
+                            type="text" 
+                            id="title" 
+                            name="title" 
+                            required 
+                            placeholder="Введите название события"
+                        >
+                        <span class="error-message" id="titleError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Описание</label>
+                        <textarea 
+                            id="description" 
+                            name="description" 
+                            rows="5"
+                            placeholder="Опишите ваше событие"
+                        ></textarea>
+                        <span class="error-message" id="descriptionError"></span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="category">Категория</label>
+                            <select id="category" name="category">
+                                <option value="">Выберите категорию</option>
+                                <option value="conference">Конференция</option>
+                                <option value="workshop">Праздничное событие</option>
+                                <option value="meetup">Собрание</option>
+                                <option value="webinar">Вебинар</option>
+                                <option value="other">Другое</option>
+                            </select>
+                            <span class="error-message" id="categoryError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="location">Место</label>
+                            <input 
+                                type="text" 
+                                id="location" 
+                                name="location" 
+                                placeholder="Где пройдет событие"
+                            >
+                            <span class="error-message" id="locationError"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="startDate">Дата начала *</label>
+                            <input 
+                                type="datetime-local" 
+                                id="startDate" 
+                                name="startDate" 
+                                required
+                            >
+                            <span class="error-message" id="startDateError"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="endDate">Дата окончания</label>
+                            <input 
+                                type="datetime-local" 
+                                id="endDate" 
+                                name="endDate"
+                            >
+                            <span class="error-message" id="endDateError"></span>
+                        </div>
+                    </div>
+
+                    <div id="formError" class="error-message form-error"></div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="window.location.href='events.html'">
+                            Отмена
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="createBtn">
+                            Создать событие
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <div id="notification" class="notification"></div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/events.js"></script>
+    <script>
+        // Check authentication
+        checkAuth();
+        
+        // Load user info
+        const user = getCurrentUser();
+        if (user) {
+            document.getElementById('userGreeting').textContent = `Привет, ${user.username}!`;
+        }
+        
+        document.getElementById('createEventForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Clear previous errors
+            document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+            
+            const title = document.getElementById('title').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const category = document.getElementById('category').value;
+            const location = document.getElementById('location').value.trim();
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            // Client-side validation
+            let hasError = false;
+            
+            if (!title) {
+                document.getElementById('titleError').textContent = 'Название обязательно';
+                hasError = true;
+            }
+            
+            if (!startDate) {
+                document.getElementById('startDateError').textContent = 'Дата начала обязательна';
+                hasError = true;
+            }
+            
+            if (endDate && startDate && new Date(endDate) < new Date(startDate)) {
+                document.getElementById('endDateError').textContent = 
+                    'Дата окончания должна быть позже даты начала';
+                hasError = true;
+            }
+            
+            if (hasError) return;
+            
+            const btn = document.getElementById('createBtn');
+            btn.disabled = true;
+            btn.textContent = 'Создание...';
+            
+            try {
+                const eventData = {
+                    title,
+                    description,
+                    category,
+                    location,
+                    start_date: startDate,
+                    end_date: endDate || null
+                };
+                
+                await createEvent(eventData);
+                showNotification('Событие успешно создано', 'success');
+                setTimeout(() => window.location.href = 'events.html', 1500);
+            } catch (error) {
+                btn.disabled = false;
+                btn.textContent = 'Создать событие';
+            }
+        });
+    </script>
+</body>
+</html>

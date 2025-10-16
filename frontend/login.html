@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход - Ala-Too University Events</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📅</text></svg>">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Bird fly away animation */
+        @keyframes flyAway {
+            0% {
+                transform: translate(0, 0) scale(1) rotate(0deg);
+                opacity: 1;
+            }
+            10% {
+                transform: translate(60px, -25px) scale(0.98) rotate(2deg);
+                opacity: 1;
+            }
+            20% {
+                transform: translate(150px, -70px) scale(0.94) rotate(5deg);
+                opacity: 1;
+            }
+            30% {
+                transform: translate(280px, -150px) scale(0.88) rotate(8deg);
+                opacity: 1;
+            }
+            40% {
+                transform: translate(450px, -260px) scale(0.78) rotate(11deg);
+                opacity: 0.95;
+            }
+            50% {
+                transform: translate(650px, -400px) scale(0.65) rotate(14deg);
+                opacity: 0.85;
+            }
+            60% {
+                transform: translate(880px, -560px) scale(0.5) rotate(16deg);
+                opacity: 0.7;
+            }
+            70% {
+                transform: translate(1120px, -730px) scale(0.38) rotate(18deg);
+                opacity: 0.5;
+            }
+            80% {
+                transform: translate(1380px, -920px) scale(0.26) rotate(20deg);
+                opacity: 0.3;
+            }
+            90% {
+                transform: translate(1650px, -1120px) scale(0.15) rotate(22deg);
+                opacity: 0.15;
+            }
+            100% {
+                transform: translate(1950px, -1350px) scale(0.05) rotate(24deg);
+                opacity: 0;
+            }
+        }
+
+        /* Natural wing flapping animation */
+        @keyframes wingFlap {
+            0% {
+                transform: rotate(-25deg);
+            }
+            25% {
+                transform: rotate(-50deg);
+            }
+            50% {
+                transform: rotate(-25deg);
+            }
+            75% {
+                transform: rotate(-45deg);
+            }
+            100% {
+                transform: rotate(-25deg);
+            }
+        }
+
+        @keyframes wingFlapRight {
+            0% {
+                transform: rotate(25deg);
+            }
+            25% {
+                transform: rotate(50deg);
+            }
+            50% {
+                transform: rotate(25deg);
+            }
+            75% {
+                transform: rotate(45deg);
+            }
+            100% {
+                transform: rotate(25deg);
+            }
+        }
+
+        /* Tail swaying animation for natural movement */
+        @keyframes tailSway {
+            0%, 100% {
+                transform: rotate(0deg);
+            }
+            25% {
+                transform: rotate(-8deg);
+            }
+            75% {
+                transform: rotate(8deg);
+            }
+        }
+
+        /* Apply animations to bird during fly away */
+        .mascot-bird.fly-away {
+            animation: flyAway 6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .mascot-bird.fly-away #leftWing {
+            animation: wingFlap 0.2s ease-in-out infinite;
+            transform-origin: 110px 150px;
+        }
+
+        .mascot-bird.fly-away #rightWing {
+            animation: wingFlapRight 0.2s ease-in-out infinite;
+            transform-origin: 190px 150px;
+        }
+
+        .mascot-bird.fly-away #tailFeathers {
+            animation: tailSway 0.3s ease-in-out infinite;
+            transform-origin: 120px 220px;
+        }
+
+        /* Happy animation */
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .mascot-bird.happy {
+            animation: bounce 0.6s ease-in-out;
+        }
+
+        /* Wave animation */
+        @keyframes wave {
+            0%, 100% {
+                transform: rotate(0deg);
+            }
+            25% {
+                transform: rotate(-15deg);
+            }
+            75% {
+                transform: rotate(15deg);
+            }
+        }
+
+        .mascot-bird.wave #rightWing {
+            animation: wave 0.6s ease-in-out;
+            transform-origin: 190px 150px;
+        }
+
+        /* Sad animation */
+        @keyframes droop {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            50% {
+                transform: translateY(10px) rotate(-5deg);
+            }
+        }
+
+        .mascot-bird.sad {
+            animation: droop 0.8s ease-in-out;
+        }
+
+        /* Angry animation */
+        @keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-5px) rotate(-2deg);
+            }
+            75% {
+                transform: translateX(5px) rotate(2deg);
+            }
+        }
+
+        .mascot-bird.angry {
+            animation: shake 0.4s ease-in-out 2;
+        }
+
+        /* Loading animation */
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        .mascot-bird.loading {
+            animation: float 1.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="mascot-container" id="mascotContainer">
+        <svg id="mascotBird" class="mascot-bird" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="bodyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#DC143C;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#B01030;stop-opacity:1" />
+                </linearGradient>
+                <linearGradient id="wingGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#1E3A8A;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+                </linearGradient>
+                <filter id="shadow">
+                    <feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity="0.3" />
+                </filter>
+            </defs>
+
+            <!-- Body with gradient -->
+            <ellipse cx="150" cy="160" rx="55" ry="70" fill="url(#bodyGradient)" filter="url(#shadow)" />
+
+            <!-- Head -->
+            <ellipse cx="150" cy="110" rx="45" ry="50" fill="url(#bodyGradient)" filter="url(#shadow)" />
+
+            <!-- Eyes background (white) -->
+            <ellipse cx="135" cy="105" rx="18" ry="22" fill="white" />
+            <ellipse cx="165" cy="105" rx="18" ry="22" fill="white" />
+
+            <!-- Pupils -->
+            <circle id="leftPupil" cx="135" cy="108" r="8" fill="#1F2937" />
+            <circle id="rightPupil" cx="165" cy="108" r="8" fill="#1F2937" />
+
+            <!-- Eye shine -->
+            <circle cx="137" cy="105" r="4" fill="white" />
+            <circle cx="167" cy="105" r="4" fill="white" />
+
+            <!-- Normal eyebrows -->
+            <path id="leftEyebrow" d="M 120 95 Q 135 92 145 95" stroke="#1F2937" stroke-width="3" fill="none"
+                stroke-linecap="round" />
+            <path id="rightEyebrow" d="M 155 95 Q 165 92 180 95" stroke="#1F2937" stroke-width="3" fill="none"
+                stroke-linecap="round" />
+
+            <!-- Angry eyebrows (hidden by default) -->
+            <path id="leftAngryBrow" d="M 120 98 L 145 92" stroke="#DC143C" stroke-width="4" fill="none"
+                stroke-linecap="round" opacity="0" />
+            <path id="rightAngryBrow" d="M 180 98 L 155 92" stroke="#DC143C" stroke-width="4" fill="none"
+                stroke-linecap="round" opacity="0" />
+
+            <!-- Beak -->
+            <path d="M 150 120 L 140 130 L 150 135 L 160 130 Z" fill="#FFA500" />
+            <path d="M 150 120 L 150 135" stroke="#FF8C00" stroke-width="2" />
+
+            <!-- Cheeks (blush) -->
+            <ellipse id="leftCheek" cx="115" cy="120" rx="12" ry="8" fill="#FFB6C1" opacity="0.7" />
+            <ellipse id="rightCheek" cx="185" cy="120" rx="12" ry="8" fill="#FFB6C1" opacity="0.7" />
+
+            <!-- Left Wing -->
+            <g id="leftWing" transform-origin="110 150">
+                <ellipse cx="110" cy="150" rx="35" ry="20" fill="url(#wingGradient)" transform="rotate(-25 110 150)"
+                    filter="url(#shadow)" />
+                <ellipse cx="100" cy="145" rx="15" ry="8" fill="#3B82F6" opacity="0.6"
+                    transform="rotate(-25 100 145)" />
+            </g>
+
+            <!-- Right Wing -->
+            <g id="rightWing" transform-origin="190 150">
+                <ellipse cx="190" cy="150" rx="35" ry="20" fill="url(#wingGradient)" transform="rotate(25 190 150)"
+                    filter="url(#shadow)" />
+                <ellipse cx="200" cy="145" rx="15" ry="8" fill="#3B82F6" opacity="0.6" transform="rotate(25 200 145)" />
+            </g>
+
+            <!-- Belly highlight -->
+            <ellipse cx="150" cy="170" rx="30" ry="40" fill="white" opacity="0.2" />
+
+            <!-- Tail feathers - now positioned at the back -->
+            <g id="tailFeathers">
+                <ellipse cx="120" cy="215" rx="25" ry="10" fill="#DC143C" transform="rotate(135 120 215)" opacity="0.8" filter="url(#shadow)" />
+                <ellipse cx="130" cy="220" rx="22" ry="9" fill="#B01030" transform="rotate(125 130 220)" opacity="0.7" />
+                <ellipse cx="115" cy="225" rx="20" ry="8" fill="#DC143C" transform="rotate(145 115 225)" opacity="0.6" />
+            </g>
+
+            <!-- Legs -->
+            <rect x="135" y="220" width="6" height="30" fill="#FFA500" rx="3" />
+            <rect x="159" y="220" width="6" height="30" fill="#FFA500" rx="3" />
+
+            <!-- Feet -->
+            <g>
+                <ellipse cx="138" cy="250" rx="12" ry="5" fill="#FF8C00" />
+                <path d="M 138 250 L 130 255 M 138 250 L 138 255 M 138 250 L 146 255" stroke="#FF8C00" stroke-width="2"
+                    stroke-linecap="round" />
+            </g>
+            <g>
+                <ellipse cx="162" cy="250" rx="12" ry="5" fill="#FF8C00" />
+                <path d="M 162 250 L 154 255 M 162 250 L 162 255 M 162 250 L 170 255" stroke="#FF8C00" stroke-width="2"
+                    stroke-linecap="round" />
+            </g>
+        </svg>
+    </div>
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <img src="images/ala-too-logo.png" alt="Ala-Too University" class="logo-image">
+                <h1>Вход</h1>
+                <p>Войдите в систему управления событиями</p>
+            </div>
+
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="username">Имя пользователя</label>
+                    <input type="text" id="username" name="username" required placeholder="Введите имя пользователя">
+                    <span class="error-message" id="usernameError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <input type="password" id="password" name="password" required placeholder="Введите пароль">
+                    <span class="error-message" id="passwordError"></span>
+                </div>
+
+                <div class="form-group-inline">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="rememberMe" name="rememberMe">
+                        <span>Запомнить меня</span>
+                    </label>
+                    <a href="forgot-password.html" class="link-secondary">Забыли пароль?</a>
+                </div>
+
+                <div id="formError" class="error-message form-error"></div>
+
+                <button type="submit" class="btn btn-primary" id="loginBtn">
+                    Войти
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Нет аккаунта? <a href="register.html">Зарегистрироваться</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script src="js/bird-animations.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            console.log('Form submitted!');
+            clearErrors();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+
+            console.log('Username:', username);
+            console.log('Password length:', password.length);
+
+            let hasError = false;
+
+            if (!username) {
+                showFieldError('usernameError', 'Имя пользователя обязательно');
+                hasError = true;
+            }
+
+            if (!password) {
+                showFieldError('passwordError', 'Пароль обязателен');
+                hasError = true;
+            }
+
+            if (hasError) {
+                console.log('Validation failed');
+                if (window.birdMascot) window.birdMascot.sad();
+                return;
+            }
+
+            console.log('Calling login()...');
+
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.textContent = 'Вход...';
+
+            if (window.birdMascot) window.birdMascot.loading();
+
+            try {
+                await login(username, password, rememberMe);
+                console.log('Login successful!');
+                if (window.birdMascot) {
+                    window.birdMascot.stopLoading();
+                    window.birdMascot.flyAway();
+                }
+            } catch (error) {
+                console.error('Login failed:', error);
+                if (window.birdMascot) {
+                    window.birdMascot.stopLoading();
+                    window.birdMascot.error();
+                }
+                btn.disabled = false;
+                btn.textContent = 'Войти';
+            }
+        });
+
+        function clearErrors() {
+            document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+        }
+
+        function showFieldError(fieldId, message) {
+            document.getElementById(fieldId).textContent = message;
+        }
+    </script>
+</body>
+</html>

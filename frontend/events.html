@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои события - Event Management</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📅</text></svg>">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1>Event Management</h1>
+                <div class="header-actions">
+                    <span class="user-greeting" id="userGreeting">Загрузка...</span>
+                    <button class="btn btn-secondary btn-sm" onclick="logout()">Выйти</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h2>Мои события</h2>
+                <button class="btn btn-primary" onclick="window.location.href='create-event.html'">
+                    + Создать событие
+                </button>
+            </div>
+
+            <!-- Search and Filters -->
+            <div class="filters-section">
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Поиск событий..."
+                        class="search-input"
+                    >
+                </div>
+                <div class="filters">
+                    <select id="categoryFilter" class="filter-select">
+                        <option value="">Все категории</option>
+                        <option value="conference">Конференция</option>
+                        <option value="workshop">Праздничное событие</option>
+                        <option value="meetup">Собрание</option>
+                        <option value="webinar">Вебинар</option>
+                        <option value="other">Другое</option>
+                    </select>
+                    <select id="sortBy" class="filter-select">
+                        <option value="date_asc">Дата (сначала ранние)</option>
+                        <option value="date_desc">Дата (сначала поздние)</option>
+                        <option value="name_asc">Название (А-Я)</option>
+                        <option value="name_desc">Название (Я-А)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Events Grid -->
+            <div id="eventsContainer" class="events-grid">
+                <div class="loading">Загрузка событий...</div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <h3>У вас пока нет событий</h3>
+                <p>Создайте первое событие, чтобы начать</p>
+                <button class="btn btn-primary" onclick="window.location.href='create-event.html'">
+                    Создать событие
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <div id="notification" class="notification"></div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h3>Подтверждение удаления</h3>
+            <p>Вы уверены, что хотите удалить это событие?</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeDeleteModal()">Отмена</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">Удалить</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/events.js"></script>
+    <script>
+        // Check authentication
+        checkAuth();
+        
+        // Load user info
+        const user = getCurrentUser();
+        if (user) {
+            document.getElementById('userGreeting').textContent = `Привет, ${user.username}!`;
+        }
+        
+        // Load events
+        let allEvents = [];
+        let deleteEventId = null;
+        
+        loadEvents();
+        
+        // Search and filter listeners
+        document.getElementById('searchInput').addEventListener('input', filterEvents);
+        document.getElementById('categoryFilter').addEventListener('change', filterEvents);
+        document.getElementById('sortBy').addEventListener('change', filterEvents);
+        
+        async function loadEvents() {
+            try {
+                allEvents = await getEvents();
+                displayEvents(allEvents);
+            } catch (error) {
+                document.getElementById('eventsContainer').innerHTML = 
+                    '<div class="error-state">Ошибка загрузки событий</div>';
+            }
+        }
+        
+        // ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ
+        function displayEvents(events) {
+            const container = document.getElementById('eventsContainer');
+            const emptyState = document.getElementById('emptyState');
+            const currentUser = getCurrentUser();
+            
+            if (events.length === 0) {
+                container.style.display = 'none';
+                emptyState.style.display = 'flex';
+                return;
+            }
+            
+            container.style.display = 'grid';
+            emptyState.style.display = 'none';
+            
+            container.innerHTML = events.map(event => {
+                // ✅ ГЛАВНОЕ: Проверяем, является ли текущий пользователь создателем
+                const isOwner = currentUser && event.created_by_id === currentUser.id;
+                
+                // Кнопки редактирования видны только для создателя
+                const actionButtons = isOwner ? `
+                    <button class="btn btn-sm btn-secondary" onclick="editEvent(${event.id})">
+                        Редактировать
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="showDeleteModal(${event.id})">
+                        Удалить
+                    </button>
+                ` : `
+                    <span style="color: #999; font-size: 0.85em;">
+                        Автор: ${escapeHtml(event.created_by_name)}
+                    </span>
+                `;
+                
+                return `
+                    <div class="event-card">
+                        <div class="event-card-header">
+                            <h3>${escapeHtml(event.title)}</h3>
+                            <span class="event-category">${getCategoryLabel(event.category)}</span>
+                        </div>
+                        <div class="event-card-body">
+                            <p class="event-description">
+                                ${escapeHtml(event.description ? event.description.substring(0, 100) : 'Нет описания')}${event.description && event.description.length > 100 ? '...' : ''}
+                            </p>
+                            <div class="event-meta">
+                                <div class="event-meta-item">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
+                                    <span>${formatDate(event.start_date)}</span>
+                                </div>
+                                ${event.location ? `
+                                    <div class="event-meta-item">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                            <circle cx="12" cy="10" r="3"></circle>
+                                        </svg>
+                                        <span>${escapeHtml(event.location)}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div class="event-card-actions">
+                            <button class="btn btn-sm btn-secondary" onclick="viewEvent(${event.id})">
+                                Просмотр
+                            </button>
+                            ${actionButtons}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function filterEvents() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+            
+            let filtered = allEvents.filter(event => {
+                const matchesSearch = event.title.toLowerCase().includes(searchTerm) ||
+                                    (event.description && event.description.toLowerCase().includes(searchTerm));
+                const matchesCategory = !category || event.category === category;
+                return matchesSearch && matchesCategory;
+            });
+            
+            // Sort
+            filtered.sort((a, b) => {
+                switch(sortBy) {
+                    case 'date_asc':
+                        return new Date(a.start_date) - new Date(b.start_date);
+                    case 'date_desc':
+                        return new Date(b.start_date) - new Date(a.start_date);
+                    case 'name_asc':
+                        return a.title.localeCompare(b.title);
+                    case 'name_desc':
+                        return b.title.localeCompare(a.title);
+                    default:
+                        return 0;
+                }
+            });
+            
+            displayEvents(filtered);
+        }
+        
+        function viewEvent(id) {
+            window.location.href = `view-event.html?id=${id}`;
+        }
+        
+        function editEvent(id) {
+            window.location.href = `edit-event.html?id=${id}`;
+        }
+        
+        function showDeleteModal(id) {
+            deleteEventId = id;
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+        
+        function closeDeleteModal() {
+            deleteEventId = null;
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+        
+        async function confirmDelete() {
+            if (!deleteEventId) return;
+            
+            try {
+                await deleteEvent(deleteEventId);
+                showNotification('Событие успешно удалено', 'success');
+                closeDeleteModal();
+                loadEvents();
+            } catch (error) {
+                // ✅ Проверка на ошибку 403 (нет прав)
+                if (error.response?.status === 403) {
+                    showNotification('Вы не можете удалить это событие', 'error');
+                } else {
+                    showNotification('Ошибка при удалении события', 'error');
+                }
+            }
+        }
+        
+        function getCategoryLabel(category) {
+            const labels = {
+                'conference': 'Конференция',
+                'workshop': 'Праздничное событие',
+                'meetup': 'Собрание',
+                'webinar': 'Вебинар',
+                'other': 'Другое'
+            };
+            return labels[category] || category;
+        }
+    </script>
+</body>
+</html>
