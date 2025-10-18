@@ -14,6 +14,7 @@ from pathlib import Path
 from datetime import timedelta
 import os
 from decouple import config
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,7 +28,6 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    'your-backend.railway.app',  # Замените после развертывания
 ]
 
 # Application definition
@@ -89,17 +89,13 @@ DATABASES = {
     }
 }
 
-# Для продакшена на Railway используйте PostgreSQL (раскомментируйте):
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': config('DB_NAME', default='events_db'),
-#         'USER': config('DB_USER', default='postgres'),
-#         'PASSWORD': config('DB_PASSWORD', default=''),
-#         'HOST': config('DB_HOST', default='localhost'),
-#         'PORT': config('DB_PORT', default='5432'),
-#     }
-# }
+# Для продакшена на Render используем PostgreSQL
+if not DEBUG:
+    DATABASES['default'] = dj_database_url.config(
+        default=config('DATABASE_URL', default=''),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -122,11 +118,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 LANGUAGE_CODE = 'ru-ru'
-
 TIME_ZONE = 'Asia/Bishkek'
-
 USE_I18N = True
-
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
@@ -141,23 +134,34 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# CORS Settings - разрешить запросы с фронтенда
+# ========================================
+# CORS Settings
+# ========================================
 if DEBUG:
+    # Для локальной разработки
     CORS_ALLOWED_ORIGINS = [
         "http://localhost:3000",
         "http://localhost:5173",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
-        "https://events-sp32.vercel.app",  # Замените после развертывания
-]
+    ]
 else:
-    # Для продакшена
+    # Для продакшена - читаем из переменных окружения
     cors_origins = config('CORS_ORIGINS', default='https://events-sp32.vercel.app')
     if ',' in cors_origins:
         CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(',')]
     else:
         CORS_ALLOWED_ORIGINS = [cors_origins]
+
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
@@ -169,7 +173,10 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+# ========================================
 # REST Framework Settings
+# ========================================
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -186,7 +193,9 @@ REST_FRAMEWORK = {
     ],
 }
 
+# ========================================
 # JWT Settings
+# ========================================
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
@@ -207,7 +216,9 @@ SIMPLE_JWT = {
     'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
+# ========================================
 # Email Settings
+# ========================================
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Для продакшена используйте SMTP:
@@ -217,46 +228,27 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # EMAIL_USE_TLS = True
 # EMAIL_HOST_USER = config('EMAIL_USER', default='')
 # EMAIL_HOST_PASSWORD = config('EMAIL_PASSWORD', default='')
-import dj_database_url
 
-# Для Render используем PostgreSQL
+# ========================================
+# Production Settings
+# ========================================
 if not DEBUG:
-    # PostgreSQL для продакшена
-    DATABASES['default'] = dj_database_url.config(
-        default=config('DATABASE_URL', default=''),
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
-
-# ALLOWED_HOSTS для продакшена
-if not DEBUG:
-    ALLOWED_HOSTS = [
-        config('ALLOWED_HOSTS', default='.onrender.com'),
-    ]
-    # Разделяем через запятую если несколько
-    if ',' in ALLOWED_HOSTS[0]:
-        ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS[0].split(',')]
-
-# CORS для продакшена
-if not DEBUG:
-    CORS_ALLOWED_ORIGINS = [
-        config('FRONTEND_URL', default='https://your-frontend.vercel.app'),
-    ]
-    # Если несколько доменов
-    cors_origins = config('CORS_ORIGINS', default='')
-    if cors_origins:
-        CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(',')]
-
-# Security settings для продакшена
-if not DEBUG:
+    # ALLOWED_HOSTS для продакшена
+    allowed_hosts = config('ALLOWED_HOSTS', default='events-db-h9ge.onrender.com')
+    if ',' in allowed_hosts:
+        ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(',')]
+    else:
+        ALLOWED_HOSTS = [allowed_hosts]
+    
+    # Для Render важно!
+    RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default='')
+    if RENDER_EXTERNAL_HOSTNAME:
+        ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    
+    # Security settings для продакшена
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
-    
-# Для Render важно!
-RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default='')
-if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
