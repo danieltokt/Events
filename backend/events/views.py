@@ -289,7 +289,12 @@ def current_user(request):
 @permission_classes([AllowAny])
 def forgot_password(request):
     """Запрос на восстановление пароля"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     email = request.data.get('email')
+    logger.info(f"=== FORGOT PASSWORD REQUEST ===")
+    logger.info(f"Email: {email}")
 
     if not email:
         return Response(
@@ -299,8 +304,10 @@ def forgot_password(request):
 
     try:
         user = User.objects.filter(email=email).first()
+        logger.info(f"User found: {user}")
         
         if not user:
+            logger.warning(f"No user found with email: {email}")
             return Response({'message': 'Инструкции отправлены на email'})
         
         token = default_token_generator.make_token(user)
@@ -310,11 +317,18 @@ def forgot_password(request):
         if settings.DEBUG:
             frontend_url = "http://localhost:3000"
         else:
-            frontend_url = "https://events-sp32.vercel.app"  # Ваш frontend URL
+            frontend_url = "https://events-sp32.vercel.app"
         
         reset_link = f"{frontend_url}/reset-password.html?uid={uid}&token={token}"
+        
+        logger.info(f"Attempting to send email to: {email}")
+        logger.info(f"Reset link: {reset_link}")
+        logger.info(f"EMAIL_HOST: {settings.EMAIL_HOST}")
+        logger.info(f"EMAIL_HOST_USER: {settings.EMAIL_HOST_USER}")
+        logger.info(f"EMAIL_PORT: {settings.EMAIL_PORT}")
+        logger.info(f"EMAIL_USE_TLS: {settings.EMAIL_USE_TLS}")
 
-        send_mail(
+        result = send_mail(
             'Восстановление пароля - Ala-Too Events',
             f'Для сброса пароля перейдите по ссылке: {reset_link}\n\n'
             f'Если вы не запрашивали сброс пароля, проигнорируйте это письмо.',
@@ -322,14 +336,23 @@ def forgot_password(request):
             [email],
             fail_silently=False,
         )
+        
+        logger.info(f"send_mail returned: {result}")
+        logger.info("=== EMAIL SENT SUCCESSFULLY ===")
 
         return Response({
             'message': 'Инструкции отправлены на email'
         })
     except Exception as e:
-        # В production не показываем детали ошибок
+        logger.error(f"ERROR sending email: {str(e)}")
+        logger.error(f"Exception type: {type(e).__name__}")
+        import traceback
+        logger.error(traceback.format_exc())
+        
+        # В production показываем ошибку для отладки (потом уберете)
         return Response({
-            'message': 'Инструкции отправлены на email'
+            'message': 'Инструкции отправлены на email',
+            'debug_error': str(e)  # ВРЕМЕННО для отладки
         })
 
 
