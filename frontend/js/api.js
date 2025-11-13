@@ -1,6 +1,7 @@
 // API Configuration
-const API_BASE_URL = "https://events-db-h9ge.onrender.com/api"
-
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8001/api'
+    : 'https://events-db-h9ge.onrender.com/api';
 // Helper function to get auth headers
 function getAuthHeaders() {
   const token = localStorage.getItem("token")

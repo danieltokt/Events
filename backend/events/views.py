@@ -289,33 +289,44 @@ def current_user(request):
 def forgot_password(request):
     """Запрос на восстановление пароля"""
     email = request.data.get('email')
-    
+
     if not email:
         return Response(
             {'detail': 'Необходимо указать email'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     try:
-        user = User.objects.get(email=email)
+        user = User.objects.filter(email=email).first()
+        
+        if not user:
+            return Response({'message': 'Инструкции отправлены на email'})
+        
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+        # Определяем URL в зависимости от окружения
+        if settings.DEBUG:
+            frontend_url = "http://localhost:3000"
+        else:
+            frontend_url = "https://events-sp32.vercel.app"  # Ваш frontend URL
         
-        reset_link = f"http://localhost:3000/reset-password.html?token={uid}/{token}"
-        
+        reset_link = f"{frontend_url}/reset-password.html?uid={uid}&token={token}"
+
         send_mail(
             'Восстановление пароля - Ala-Too Events',
             f'Для сброса пароля перейдите по ссылке: {reset_link}\n\n'
             f'Если вы не запрашивали сброс пароля, проигнорируйте это письмо.',
-            'noreply@alatoo.edu.kg',
+            settings.DEFAULT_FROM_EMAIL,
             [email],
             fail_silently=False,
         )
-        
+
         return Response({
             'message': 'Инструкции отправлены на email'
         })
-    except User.DoesNotExist:
+    except Exception as e:
+        # В production не показываем детали ошибок
         return Response({
             'message': 'Инструкции отправлены на email'
         })
