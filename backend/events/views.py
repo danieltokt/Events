@@ -12,6 +12,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.db.models import Q, Count
 from django.shortcuts import get_object_or_404
+from django.conf import settings  # ← ДОБАВЬТЕ ЭТУ СТРОКУ
 from .models import Event, EventRegistration, Notification
 from .serializers import (
     EventSerializer, EventRegistrationSerializer, 
