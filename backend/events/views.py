@@ -290,9 +290,11 @@ def current_user(request):
 def forgot_password(request):
     """Запрос на восстановление пароля"""
     import logging
-    logger = logging.getLogger(__name__)
+    import resend
     
+    logger = logging.getLogger(__name__)
     email = request.data.get('email')
+    
     logger.info(f"=== FORGOT PASSWORD REQUEST ===")
     logger.info(f"Email: {email}")
 
@@ -321,38 +323,42 @@ def forgot_password(request):
         
         reset_link = f"{frontend_url}/reset-password.html?uid={uid}&token={token}"
         
-        logger.info(f"Attempting to send email to: {email}")
+        logger.info(f"Attempting to send email via Resend API")
         logger.info(f"Reset link: {reset_link}")
-        logger.info(f"EMAIL_HOST: {settings.EMAIL_HOST}")
-        logger.info(f"EMAIL_HOST_USER: {settings.EMAIL_HOST_USER}")
-        logger.info(f"EMAIL_PORT: {settings.EMAIL_PORT}")
-        logger.info(f"EMAIL_USE_TLS: {settings.EMAIL_USE_TLS}")
-
-        result = send_mail(
-            'Восстановление пароля - Ala-Too Events',
-            f'Для сброса пароля перейдите по ссылке: {reset_link}\n\n'
-            f'Если вы не запрашивали сброс пароля, проигнорируйте это письмо.',
-            settings.DEFAULT_FROM_EMAIL,
-            [email],
-            fail_silently=False,
-        )
         
-        logger.info(f"send_mail returned: {result}")
+        # Используем Resend API вместо SMTP
+        resend.api_key = settings.RESEND_API_KEY
+        
+        params = {
+            "from": "Events App <onboarding@resend.dev>",
+            "to": [email],
+            "subject": "Восстановление пароля - Ala-Too Events",
+            "html": f"""
+                <h2>Восстановление пароля</h2>
+                <p>Для сброса пароля перейдите по ссылке:</p>
+                <p><a href="{reset_link}">{reset_link}</a></p>
+                <br>
+                <p>Если вы не запрашивали сброс пароля, проигнорируйте это письмо.</p>
+            """
+        }
+        
+        email_result = resend.Emails.send(params)
+        logger.info(f"Resend API response: {email_result}")
         logger.info("=== EMAIL SENT SUCCESSFULLY ===")
 
         return Response({
             'message': 'Инструкции отправлены на email'
         })
+        
     except Exception as e:
         logger.error(f"ERROR sending email: {str(e)}")
         logger.error(f"Exception type: {type(e).__name__}")
         import traceback
         logger.error(traceback.format_exc())
         
-        # В production показываем ошибку для отладки (потом уберете)
         return Response({
             'message': 'Инструкции отправлены на email',
-            'debug_error': str(e)  # ВРЕМЕННО для отладки
+            'debug_error': str(e)
         })
 
 

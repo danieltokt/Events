@@ -252,4 +252,6 @@ if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
+
+RESEND_API_KEY = config('RESEND_API_KEY', default='')
     
