@@ -314,19 +314,46 @@ def forgot_password(request):
         
         reset_link = f"{frontend_url}/reset-password.html?uid={uid}&token={token}"
         
-        # Пока просто вернём успех без отправки
-        print(f"Reset link (not sent): {reset_link}")
-
+        print(f"Attempting to send email to: {email}")
+        print(f"Reset link: {reset_link}")
+        
+        # Отправка через Resend API
+        try:
+            import resend
+            resend.api_key = settings.RESEND_API_KEY
+            
+            params = {
+                "from": "Ala-Too Events <onboarding@resend.dev>",
+                "to": [email],
+                "subject": "Восстановление пароля",
+                "html": f"""
+                    <h2>Восстановление пароля - Ala-Too Events</h2>
+                    <p>Для сброса пароля перейдите по ссылке:</p>
+                    <p><a href="{reset_link}" style="display:inline-block;padding:10px 20px;background:#667eea;color:white;text-decoration:none;border-radius:5px;">Сбросить пароль</a></p>
+                    <p>Или скопируйте ссылку: {reset_link}</p>
+                    <br>
+                    <p style="color:#666;font-size:12px;">Если вы не запрашивали сброс пароля, проигнорируйте это письмо.</p>
+                """
+            }
+            
+            result = resend.Emails.send(params)
+            print(f"Email sent successfully: {result}")
+            
+        except Exception as email_error:
+            print(f"Error sending email: {email_error}")
+            # Всё равно возвращаем успех для безопасности
+        
         return Response({
-            'message': 'Инструкции отправлены на email (test mode)'
+            'message': 'Инструкции отправлены на email'
         })
         
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error in forgot_password: {e}")
+        import traceback
+        traceback.print_exc()
         return Response({
-            'message': 'Ошибка',
-            'error': str(e)
-        }, status=400)
+            'message': 'Инструкции отправлены на email'
+        })
 
 
 @api_view(['POST'])
