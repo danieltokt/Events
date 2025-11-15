@@ -416,3 +416,28 @@ def reset_password(request):
             {'detail': 'Недействительная или устаревшая ссылка'},
             status=status.HTTP_400_BAD_REQUEST
         )
+    
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_superuser_temp(request):
+    """ВРЕМЕННО - для создания суперпользователя"""
+    secret = request.data.get('secret')
+    
+    if secret != 'create-admin-daniel-2024':
+        return Response({'error': 'Invalid'}, status=403)
+    
+    try:
+        if User.objects.filter(username='admin').exists():
+            return Response({'error': 'Admin already exists'}, status=400)
+        
+        user = User.objects.create_superuser(
+            username='admin',
+            email='admin@example.com',
+            password='admin123'
+        )
+        return Response({
+            'message': f'Superuser created: {user.username}',
+            'login_url': 'https://events-db-h9ge.onrender.com/admin/'
+        })
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
