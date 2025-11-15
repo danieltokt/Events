@@ -233,6 +233,7 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@alatoo.edu.kg
 # ========================================
 if not DEBUG:
     # ALLOWED_HOSTS для продакшена
+    CORS_ALLOW_ALL_ORIGINS = True
     allowed_hosts = config('ALLOWED_HOSTS', default='events-db-h9ge.onrender.com')
     if ',' in allowed_hosts:
         ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(',')]
