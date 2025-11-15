@@ -373,6 +373,9 @@ def reset_password(request):
     token_str = request.data.get('token', '')
     new_password = request.data.get('password')
     
+    print(f"Reset password attempt - token: {token_str[:20]}...")
+    print(f"New password length: {len(new_password) if new_password else 0}")
+    
     if not new_password:
         return Response(
             {'detail': 'Необходимо указать новый пароль'},
@@ -394,14 +397,21 @@ def reset_password(request):
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
         
+        print(f"User found: {user.username}")
+        print(f"Checking token...")
+        
         if default_token_generator.check_token(user, token):
+            print(f"Token valid! Setting new password...")
             user.set_password(new_password)
             user.save()
+            print(f"Password changed successfully for user: {user.username}")
             return Response({'message': 'Пароль успешно изменен'})
         else:
+            print("Token is invalid or expired")
             raise ValueError("Invalid token")
             
-    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist) as e:
+        print(f"Error: {e}")
         return Response(
             {'detail': 'Недействительная или устаревшая ссылка'},
             status=status.HTTP_400_BAD_REQUEST
