@@ -18,6 +18,7 @@ from .serializers import (
     EventSerializer, EventRegistrationSerializer, 
     NotificationSerializer, UserSerializer, UserRegistrationSerializer
 )
+import resend
 
 
 class EventViewSet(viewsets.ModelViewSet):
@@ -289,14 +290,7 @@ def current_user(request):
 @permission_classes([AllowAny])
 def forgot_password(request):
     """Запрос на восстановление пароля"""
-    import logging
-    import resend
-    
-    logger = logging.getLogger(__name__)
     email = request.data.get('email')
-    
-    logger.info(f"=== FORGOT PASSWORD REQUEST ===")
-    logger.info(f"Email: {email}")
 
     if not email:
         return Response(
@@ -306,16 +300,13 @@ def forgot_password(request):
 
     try:
         user = User.objects.filter(email=email).first()
-        logger.info(f"User found: {user}")
         
         if not user:
-            logger.warning(f"No user found with email: {email}")
             return Response({'message': 'Инструкции отправлены на email'})
         
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
 
-        # Определяем URL в зависимости от окружения
         if settings.DEBUG:
             frontend_url = "http://localhost:3000"
         else:
@@ -323,43 +314,19 @@ def forgot_password(request):
         
         reset_link = f"{frontend_url}/reset-password.html?uid={uid}&token={token}"
         
-        logger.info(f"Attempting to send email via Resend API")
-        logger.info(f"Reset link: {reset_link}")
-        
-        # Используем Resend API вместо SMTP
-        resend.api_key = settings.RESEND_API_KEY
-        
-        params = {
-            "from": "Events App <onboarding@resend.dev>",
-            "to": [email],
-            "subject": "Восстановление пароля - Ala-Too Events",
-            "html": f"""
-                <h2>Восстановление пароля</h2>
-                <p>Для сброса пароля перейдите по ссылке:</p>
-                <p><a href="{reset_link}">{reset_link}</a></p>
-                <br>
-                <p>Если вы не запрашивали сброс пароля, проигнорируйте это письмо.</p>
-            """
-        }
-        
-        email_result = resend.Emails.send(params)
-        logger.info(f"Resend API response: {email_result}")
-        logger.info("=== EMAIL SENT SUCCESSFULLY ===")
+        # Пока просто вернём успех без отправки
+        print(f"Reset link (not sent): {reset_link}")
 
         return Response({
-            'message': 'Инструкции отправлены на email'
+            'message': 'Инструкции отправлены на email (test mode)'
         })
         
     except Exception as e:
-        logger.error(f"ERROR sending email: {str(e)}")
-        logger.error(f"Exception type: {type(e).__name__}")
-        import traceback
-        logger.error(traceback.format_exc())
-        
+        print(f"Error: {e}")
         return Response({
-            'message': 'Инструкции отправлены на email',
-            'debug_error': str(e)
-        })
+            'message': 'Ошибка',
+            'error': str(e)
+        }, status=400)
 
 
 @api_view(['POST'])
