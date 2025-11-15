@@ -256,13 +256,16 @@ def login_user(request):
     username = request.data.get('username')
     password = request.data.get('password')
     
+    print(f"Login attempt - username: {username}")
+    
     if not username or not password:
         return Response(
-            {'Необходимо указать имя пользователя и пароль'},
+            {'error': 'Необходимо указать имя пользователя и пароль'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
     user = authenticate(username=username, password=password)
+    print(f"Authentication result: {user}")
     
     if user is not None:
         refresh = RefreshToken.for_user(user)
@@ -272,8 +275,15 @@ def login_user(request):
             'user': UserSerializer(user).data
         })
     
+    # Проверим, существует ли такой пользователь
+    try:
+        user_exists = User.objects.get(username=username)
+        print(f"User exists: {user_exists}, but password is wrong")
+    except User.DoesNotExist:
+        print(f"User {username} does not exist")
+    
     return Response(
-        {'Неверные учетные данные'},
+        {'error': 'Неверные учетные данные'},
         status=status.HTTP_401_UNAUTHORIZED
     )
 
